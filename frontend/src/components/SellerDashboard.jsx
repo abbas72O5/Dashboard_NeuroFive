@@ -11,16 +11,20 @@ const SellerDashboard = () => {
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('last7days');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
         const response = await fetch(`http://localhost:5000/api/seller/stats?range=${filter}`);
+        if (!response.ok) throw new Error('Network response was not ok');
         const result = await response.json();
         setData(result);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
       }
       setLoading(false);
     };
@@ -28,10 +32,20 @@ const SellerDashboard = () => {
     fetchData();
   }, [filter]);
 
-  if (loading || !data) {
+  if (loading) {
     return <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
       <h2>Loading Dashboard...</h2>
     </div>;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
+        <h2 style={{ color: 'var(--secondary)' }}>Failed to load dashboard data</h2>
+        <p>Please make sure the Express backend server is running on port 5000.</p>
+        <p>Run: <code>cd backend && node server.js</code></p>
+      </div>
+    );
   }
 
   return (
